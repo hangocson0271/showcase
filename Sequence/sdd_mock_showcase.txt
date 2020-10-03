@@ -1,0 +1,61 @@
+@startuml
+actor user order 1
+participant module_app order 2
+participant ExploreListFragment order 3
+participant ExploreAdapter order 4
+participant InspireAdapter order 5
+participant NearbyAdapter order 6
+participant ExploreListViewModel order 7
+participant GetAlbumListUseCase order 8
+participant ExploreRepositoryImpl order 9
+participant ExploreRetrofitService order 10
+database DB order 11
+
+user ->  module_app: click explore icon
+module_app -> ExploreListFragment: start explore
+ExploreListFragment -> ExploreListViewModel: loadData()
+ExploreListViewModel -> GetAlbumListUseCase: getAlbumList()
+GetAlbumListUseCase -> GetAlbumListUseCase: execute()
+GetAlbumListUseCase -> ExploreRepositoryImpl: searchAlbum(string phrase)
+ExploreRepositoryImpl -> ExploreRetrofitService: searchAlbumAsync(string phrase)
+ExploreRetrofitService -> ExploreRetrofitService: searchAlbumAsync(string phrase, int limit)
+ExploreRetrofitService -> DB: search(string album, int limit)
+ExploreRetrofitService <-- DB: SearchAlbumResponse
+ExploreRepositoryImpl <-- ExploreRetrofitService: List<ExploreDomainModel>
+
+alt successful case
+	GetAlbumListUseCase <-- ExploreRepositoryImpl: return success
+	alt List<ExploreDomainModel> != empty()
+		ExploreListViewModel <-- GetAlbumListUseCase: List<ExploreDomainModel>
+		ExploreAdapter <-- ExploreListViewModel: List<ExploreDomainModel>
+		InspireAdapter <-- ExploreListViewModel: List<ExploreDomainModel>
+		NearbyAdapter <-- ExploreListViewModel: List<ExploreDomainModel>
+		ExploreListFragment <-- ExploreAdapter: return view
+		ExploreListFragment <-- InspireAdapter: return view
+		ExploreListFragment <-- NearbyAdapter: return view
+		module_app <-- ExploreListFragment: return view
+		user <-- module_app: return view
+	else List<ExploreDomainModel> == empty()
+		ExploreListViewModel <-- GetAlbumListUseCase: empty list
+		ExploreAdapter <-- ExploreListViewModel: List<ExploreDomainModel>
+		InspireAdapter <-- ExploreListViewModel: List<ExploreDomainModel>
+		NearbyAdapter <-- ExploreListViewModel: List<ExploreDomainModel>
+		ExploreListFragment <-- ExploreAdapter: return view
+		ExploreListFragment <-- InspireAdapter: return view
+		ExploreListFragment <-- NearbyAdapter: return view
+		module_app <-- ExploreListFragment: return view
+		user <-- module_app: return view
+	end
+else error case
+	GetAlbumListUseCase <-- ExploreRepositoryImpl: return error
+	ExploreListViewModel <-- GetAlbumListUseCase: empty list
+	ExploreAdapter <-- ExploreListViewModel: List<ExploreDomainModel>
+	InspireAdapter <-- ExploreListViewModel: List<ExploreDomainModel>
+	NearbyAdapter <-- ExploreListViewModel: List<ExploreDomainModel>
+	ExploreListFragment <-- ExploreAdapter: return view
+	ExploreListFragment <-- InspireAdapter: return view
+	ExploreListFragment <-- NearbyAdapter: return view
+	module_app <-- ExploreListFragment: return view
+	user <-- module_app: return view
+end
+@enduml 
